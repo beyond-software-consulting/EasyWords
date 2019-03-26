@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using QuestionManager;
-
+using DataBaseProvider;
 namespace Questions
 {
     public class Startup
@@ -28,9 +28,12 @@ namespace Questions
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            
 
-            services.AddSingleton<IQuestionManager, QuestionManager.QuestionManager>();
+
+            services.AddQuestionDataBaseContext();
+            services.AddTransient<QuestionProvider.IQuestionProvider, QuestionProvider.QuestionProvider>();
+            services.AddTransient<IQuestionManager, QuestionManager.QuestionManager>();
+
 
 
         }

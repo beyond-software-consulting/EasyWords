@@ -26,6 +26,11 @@ namespace Questions.Controllers
             return _manager.GetQuestion(Dictionary);
         }
 
+        [HttpPost("SendAnswer")]
+        public ActionResult SendAnswer() {
+
+            return null;
+        }
 
 
 

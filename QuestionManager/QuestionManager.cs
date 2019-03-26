@@ -1,17 +1,30 @@
 ﻿using System;
+using AnswerModel;
+using DataBaseProvider;
 using QuestionModel;
+using QuestionProvider;
 
 namespace QuestionManager
 {
     public class QuestionManager:IQuestionManager
     {
-        public QuestionManager()
+        IQuestionProvider provider;
+        QuestionDBContext dbContext;
+        public QuestionManager(IQuestionProvider Provider,QuestionDBContext db)
         {
+            provider = Provider;
+            dbContext = db;
         }
 
         public Question GetQuestion(string Dictionary)
         {
-            return new Question() { ID = 1, QuestionText = "Test", Answer = "Test", Dictionary = "EN", DiffcultLevel = 1 };
+            return provider.GetNextQuestion();
+        }
+
+        public string SaveAnswer(AnswerModel.Answer answer)
+        {
+            
+            return "";
         }
     }
 }

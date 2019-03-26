@@ -12,5 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QuestionManager\QuestionManager.csproj" />
+    <ProjectReference Include="..\QuestionProvider\QuestionProvider.csproj" />
+    <ProjectReference Include="..\DataBaseProvider\DataBaseProvider.csproj" />
   </ItemGroup>
 </Project>
