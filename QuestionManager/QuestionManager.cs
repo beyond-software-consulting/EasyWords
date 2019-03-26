@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using AnswerModel;
 using DataBaseProvider;
 using QuestionModel;
@@ -22,9 +23,10 @@ namespace QuestionManager
         }
 
         public string SaveAnswer(AnswerModel.Answer answer)
-        {
-            
-            return "";
+        {   
+            dbContext.AddAnswer(answer).Wait();
+            var rank = provider.CalculateRank();
+            return rank.ToString();
         }
     }
 }
