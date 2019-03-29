@@ -5,9 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QuestionModel\QuestionModel.csproj" />
     <ProjectReference Include="..\QuestionProvider\QuestionProvider.csproj" />
-    <ProjectReference Include="..\AnswerModel\AnswerModel.csproj" />
     <ProjectReference Include="..\DataBaseProvider\DataBaseProvider.csproj" />
   </ItemGroup>
 </Project>

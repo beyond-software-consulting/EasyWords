@@ -10,8 +10,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AnswerModel\AnswerModel.csproj" />
-    <ProjectReference Include="..\ModelBase\ModelBase.csproj" />
-    <ProjectReference Include="..\QuestionModel\QuestionModel.csproj" />
+    <Compile Remove="DependencyInjection.cs" />
   </ItemGroup>
 </Project>

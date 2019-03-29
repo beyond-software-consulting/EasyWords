@@ -24,7 +24,7 @@ namespace QuestionManager
 
         public string SaveAnswer(AnswerModel.Answer answer)
         {   
-            dbContext.AddAnswer(answer).Wait();
+            //dbContext.AddAnswer(answer).Wait();
             var rank = provider.CalculateRank();
             return rank.ToString();
         }

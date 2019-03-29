@@ -10,9 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using QuestionManager;
-using DataBaseProvider;
-namespace Questions
+
+namespace Profile
 {
     public class Startup
     {
@@ -27,16 +26,6 @@ namespace Questions
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
-
-            ///Question Microservice db entegration
-            //services.AddQuestionDataBaseContext();
-
-            services.AddTransient<QuestionProvider.IQuestionProvider, QuestionProvider.QuestionProvider>();
-            services.AddTransient<IQuestionManager, QuestionManager.QuestionManager>();
-
-
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

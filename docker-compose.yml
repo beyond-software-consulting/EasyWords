@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  gatewayapi:
+    image: ${DOCKER_REGISTRY-}gatewayapi
+    build:
+      context: .
+      dockerfile: GatewayAPI/Dockerfile
+
+  profile:
+    image: ${DOCKER_REGISTRY-}profile
+    build:
+      context: .
+      dockerfile: Profile/Dockerfile
+
+
+  questions:
+    image: ${DOCKER_REGISTRY-}questions
+    build:
+      context: .
+      dockerfile: Questions/Dockerfile
+
