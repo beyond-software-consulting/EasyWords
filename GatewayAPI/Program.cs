@@ -15,7 +15,7 @@ namespace GatewayAPI
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            BuildWebHost(args).Run();
         }
 
         public static IWebHost BuildWebHost(string[] args)

@@ -16,5 +16,10 @@
     <Folder Include="Managers\" />
     <Folder Include="Providers\" />
     <Folder Include="Models\" />
+    <Folder Include="Events\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EventBus\EventBus.csproj" />
+    <ProjectReference Include="..\EventBusRabbitMQ\EventBusRabbitMQ.csproj" />
   </ItemGroup>
 </Project>

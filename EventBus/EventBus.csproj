@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RabbitMQ.Client" Version="5.1.0" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Events\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="IMessageProvider.cs" />
-    <Compile Remove="RabbitMQProvider.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>
 </Project>

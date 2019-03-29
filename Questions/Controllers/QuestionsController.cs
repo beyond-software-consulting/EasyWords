@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EventBus;
+
 using Microsoft.AspNetCore.Mvc;
 using QuestionManager;
+using Questions.EventHandlers;
 
 namespace Questions.Controllers
 {
@@ -12,10 +15,12 @@ namespace Questions.Controllers
     public class QuestionsController : ControllerBase
     {
         IQuestionManager _manager;
-
-        public QuestionsController(IQuestionManager Manager)
+        IEventBus _eventBus;
+        public QuestionsController(IQuestionManager Manager,IEventBus eventBus)
         {
-            _manager = Manager; 
+            _manager = Manager;
+            _eventBus = eventBus;
+
         }
         // GET api/values
 
@@ -23,6 +28,8 @@ namespace Questions.Controllers
         [HttpGet("GetQuestion/{Dictionary}")]
         public ActionResult<QuestionModel.Question> GetQuestion(string Dictionary)
         {
+            var nextQuestion = _manager.GetQuestion(Dictionary);
+            _eventBus.Publish(new UserRankChangedIntegrationEvent(Guid.NewGuid(), 5.0f));
             return _manager.GetQuestion(Dictionary);
         }
 
