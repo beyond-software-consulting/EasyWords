@@ -1,4 +1,19 @@
 ﻿{
-  "ReRoutes": [],
-  "GlobalConfiguration": {}
+  "ReRoutes": [
+    {
+      "DownstreamPathTemplate": "/api/Questions/GetQuestion/{Dictionary}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "questionapi",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/Q/GetQuestion/{Dictionary}"
+       
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:8080"
+  }
 }

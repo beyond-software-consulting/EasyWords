@@ -1,22 +1,42 @@
 version: '3.4'
 
 services:
+
+
+  
+  mongodb: 
+    ports: 
+      - "27017:27017"
+      - "27018:27018"
+  
+  rabbitmq:
+    ports:
+      - "5672:5672"
+      - "5671:5671"
+      - "15672:15672"
+  
   gatewayapi:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Development      
     ports:
-      - "80"
+      - "8080:80"
 
   profile:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
     ports:
-      - "80"
+      - "8082:80"
 
 
   questions:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Development   
+      - ASPNETCORE_URLS=http://0.0.0.0:80
     ports:
-      - "80"
+      - "8081:80"
 
+
+     
+  
+ 

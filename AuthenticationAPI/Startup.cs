@@ -10,10 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Ocelot.Middleware;
-using Ocelot.DependencyInjection;
 
-namespace GatewayAPI
+namespace AuthenticationAPI
 {
     public class Startup
     {
@@ -28,7 +26,6 @@ namespace GatewayAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.AddOcelot(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,7 +43,6 @@ namespace GatewayAPI
 
             app.UseHttpsRedirection();
             app.UseMvc();
-            app.UseOcelot().Wait();
         }
     }
 }

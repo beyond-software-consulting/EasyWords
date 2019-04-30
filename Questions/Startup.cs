@@ -10,14 +10,22 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using QuestionManager;
-using DataBaseProvider;
 
 using RabbitMQ.Client;
 using EventBus;
 using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using EventBus.Interfaces;
 using EventBusRabbitMQProvider;
+using Questions.Events;
+using Questions.EventHandlers;
+using Questions.Interfaces;
+using Questions.Models;
+using Questions.Providers;
+using Questions.Managers;
+using Questions.Adapters;
+using Questions.Providers.Database;
+using Questions.Providers.Cache;
 
 namespace Questions
 {
@@ -31,16 +39,28 @@ namespace Questions
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddLogging(); 
+
 
 
             ///Question Microservice db entegration
             //services.AddQuestionDataBaseContext();
 
-            services.AddTransient<QuestionProvider.IQuestionProvider, QuestionProvider.QuestionProvider>();
-            services.AddTransient<IQuestionManager, QuestionManager.QuestionManager>();
+            services.AddTransient<IDatabaseRepository<Pair>>(p => new PairDatabaseRepository(Configuration["QuestionDbConnectionString"]));
+            services.AddTransient<IDatabaseRepository<Question>>(p => new QuestionDatabaseRepository(Configuration["QuestionDbConnectionString"]));
+            services.AddTransient<IDatabaseRepository<UserPairScore>>(p => new UserPairScoreDatabaseRepository(Configuration["QuestionDbConnectionString"]));
+
+            services.AddTransient<ICacheProvider>(cache => new CouchbaseCacheProvider(Configuration["CouchbaseConnectionString"]));
+
+
+           
+            services.AddTransient<IQuestionManager, QuestionManager>();
+
+
 
             services.AddSingleton<IRabbitMQPersistentConnection>(sp =>
             {
@@ -72,11 +92,18 @@ namespace Questions
 
             RegisterEventBus(services);
 
+
+            var container = new ContainerBuilder();
+            container.Populate(services);
+
+            return new AutofacServiceProvider(container.Build());
         }
+
+
 
         private void RegisterEventBus(IServiceCollection services)
         {
-            var subscriptionClientName = Configuration["SubscriptionClientName"];
+            var subscriptionClientName = "Questions";
 
 
             services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
@@ -98,7 +125,7 @@ namespace Questions
 
             services.AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
 
-            //services.AddTransient<ProductPriceChangedIntegrationEventHandler>();
+           services.AddTransient<UserRankChangedIntegrationEventHandler>();
             //services.AddTransient<OrderStartedIntegrationEventHandler>();
         }
 
@@ -113,10 +140,22 @@ namespace Questions
             {
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
-            }
 
+            }
+            app.UseGlobalExceptionHandling();
             app.UseHttpsRedirection();
             app.UseMvc();
+
+            ConfigureEventBus(app);
+            
+        }
+
+        private void ConfigureEventBus(IApplicationBuilder app)
+        {
+            var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+
+            eventBus.Subscribe<UserRankChangedIntegrationEvent, UserRankChangedIntegrationEventHandler>();
+            //eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
         }
     }
 }

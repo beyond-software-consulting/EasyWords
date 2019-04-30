@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EventBus;
-
 using Microsoft.AspNetCore.Mvc;
-using QuestionManager;
-using Questions.EventHandlers;
+using Questions.ApiModels;
+using Questions.Interfaces;
+using Questions.Models;
 
 namespace Questions.Controllers
 {
@@ -25,18 +25,22 @@ namespace Questions.Controllers
         // GET api/values
 
 
-        [HttpGet("GetQuestion/{Dictionary}")]
-        public ActionResult<QuestionModel.Question> GetQuestion(string Dictionary)
+        [HttpGet("GetQuestion/{UserClientID}/{UserID}/{DictionaryID}/{QuestionTypeID}")]
+        public ActionResult<QuestionBinding> GetQuestion(int UserClientID,int UserID,int DictionaryID,int QuestionTypeID)
         {
-            var nextQuestion = _manager.GetQuestion(Dictionary);
-            _eventBus.Publish(new UserRankChangedIntegrationEvent(Guid.NewGuid(), 5.0f));
-            return _manager.GetQuestion(Dictionary);
+            return  _manager.GetQuestion(UserID, UserClientID, DictionaryID,QuestionTypeID);
+
+
         }
 
-        [HttpPost("SendAnswer")]
-        public ActionResult SendAnswer() {
 
-            return null;
+
+
+        [HttpPost("SaveAnswer")]
+        public ActionResult SaveAnswer([FromBody] Answer answer) {
+
+            return _manager.SaveAnswer(answer);
+
         }
 
 
