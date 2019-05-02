@@ -45,6 +45,7 @@ namespace Tests
         
 
         }
+
         private void RegisterQuestionManager() {
 
             questionManager = new QuestionManager(questionDatabaseProvider,
@@ -59,6 +60,7 @@ namespace Tests
         }
 
         private void RegisterDatabaseProviders() {
+
             questionDatabaseProvider = new Questions.Providers.Database.QuestionDatabaseRepository(configuration["QuestionDbConnectionString"]);
             pairDatabaseProvider = new Questions.Providers.Database.PairDatabaseRepository(configuration["QuestionDbConnectionString"]);
             userScoreDatabaseProvider = new Questions.Providers.Database.UserPairScoreDatabaseRepository(configuration["QuestionDbConnectionString"]);
@@ -69,6 +71,8 @@ namespace Tests
 
         private void RegisterRabbitMQPersistentConnection() 
         {
+
+            var eventB = new Mock<IEventBus>();
 
             var loggerMock = new Mock<ILogger<DefaultRabbitMQPersistentConnection>>();
             var factory = new ConnectionFactory()
@@ -118,10 +122,21 @@ namespace Tests
 
             return builder.Build();
         }
+
         [Test]
         public void GetQuestion()
         {
 
+            var question = questionController.GetQuestion(1, 1, 12312, 1231);
+            Assert.IsNull(question);
+
+            question = questionController.GetQuestion(1, 1, 1, 1231);
+            Assert.IsNull(question);
+
+            question = questionController.GetQuestion(1, 1, 1, 1);
+            Assert.IsNotNull(question);
+
+            Assert.GreaterOrEqual(question.Value.WrongPairs.Count, 1);
         }
 
         [Test]

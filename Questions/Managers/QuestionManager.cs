@@ -47,6 +47,13 @@ namespace Questions.Managers
         {        
             RefreshCaches();
 
+            var dictionary = CacheProvider.Pairs.Where(d => d.DictionaryId == dictionaryId).FirstOrDefault();
+            if (dictionary == null)
+                throw new NullReferenceException(string.Format("Dictionary not exist with DictionaryID:{0}", dictionaryId));
+
+            if (questionTypeId < 1 && questionTypeId > 2)
+                throw new ArgumentOutOfRangeException(string.Format("Invalid QuestionTypeID {0}", questionTypeId));
+
             if (CacheProvider.Pairs.Count < 5)
                 throw new InvalidOperationException("Not enough pair for dictionary");
 
@@ -59,8 +66,8 @@ namespace Questions.Managers
             if (unansweredQuestion != null)
             {
 
-                var unansweredPair = CacheProvider.Pairs.FirstOrDefault(p => p.Id == unansweredQuestion.PairID);
-                var wrongPairs = GetWrongPairs(unansweredPair.SoundEx1, unansweredQuestion.QuestionWordNumber);
+                var unansweredPair = CacheProvider.Pairs.Where(p => p.Id == unansweredQuestion.PairID).FirstOrDefault();
+                var wrongPairs = GetWrongPairs(unansweredPair.SoundEx1, unansweredQuestion.QuestionWordNumber, dictionaryId);
                 return ModelFactory.ToQuestionBinding(unansweredQuestion, unansweredPair, wrongPairs, userRank);
             }
 
@@ -70,11 +77,11 @@ namespace Questions.Managers
 
             int numberOfWord = Convert.ToInt32(Math.Floor(new Random().NextDouble() * (3 - 1) + 1));
 
-            var question = AddNewQuestionWithUnbindPair(unbindPair, userClientId, numberOfWord);  
+            var question = AddNewQuestionWithUnbindPair(unbindPair, userClientId, numberOfWord);
 
-            RefreshCaches();
+            RefreshCaches(true);
 
-            var wrongPairList = GetWrongPairs(unbindPair.SoundEx1, numberOfWord);
+            var wrongPairList = GetWrongPairs(unbindPair.SoundEx1, numberOfWord, dictionaryId);
             var questionBind = ModelFactory.ToQuestionBinding(question, unbindPair, wrongPairList, userRank);
             return questionBind;
         }
@@ -185,13 +192,13 @@ namespace Questions.Managers
             }
 
         }
-        private void RefreshCaches()
+        private void RefreshCaches(bool ForceRefresh=false)
         {
-            if (CacheProvider.Pairs == null)
+            if (CacheProvider.Pairs == null || ForceRefresh)
                 CacheProvider.Pairs = PairDatabaseProvider.GetAll();
-            if (CacheProvider.Questions == null)
+            if (CacheProvider.Questions == null || ForceRefresh)
                 CacheProvider.Questions = QuestionDatabaseProvider.GetAll();
-            if (CacheProvider.UserScores == null) CacheProvider.UserScores = UserPairScoreDatabaseProvider.GetAll();
+            if (CacheProvider.UserScores == null || ForceRefresh) CacheProvider.UserScores = UserPairScoreDatabaseProvider.GetAll();
         }
 
 
@@ -223,7 +230,7 @@ namespace Questions.Managers
             var results = (from s in CacheProvider.UserScores
                            where s.UserId == userId && s.DictionaryId == dictionaryId
                            group s by new { s.PairId, s.DictionaryId }
-            into temp
+                           into temp
                            select new CommunityScore()
                            {
 
@@ -282,13 +289,15 @@ namespace Questions.Managers
         }
 
 
-        private IList<Pair> GetWrongPairs(string soundEx,int questionWordNumber)
+        private IList<Pair> GetWrongPairs(string soundEx,int questionWordNumber,int dictionaryId)
         {
             var letter = soundEx[0].ToString();
             var soundExNumber = int.Parse(soundEx.Substring(1));
 
             var result = (from p in CacheProvider.Pairs
-                          where (questionWordNumber == 1 ? p.SoundEx1[0].ToString() : p.SoundEx2[0].ToString()) == letter
+                          where 
+                          p.DictionaryId == dictionaryId
+                          && (questionWordNumber == 1 ? p.SoundEx1[0].ToString() : p.SoundEx2[0].ToString()) == letter
                           && Math.Abs(int.Parse(questionWordNumber == 1 ? p.SoundEx1.Substring(1) : p.SoundEx2.Substring(1)) - soundExNumber) < 40
                           select p)
                           .OrderByDescending(x => Math.Abs(int.Parse((questionWordNumber == 1 ? x.SoundEx1.Substring(1) : x.SoundEx2.Substring(1))) - soundExNumber))

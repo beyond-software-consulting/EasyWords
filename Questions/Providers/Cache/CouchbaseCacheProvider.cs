@@ -43,7 +43,7 @@ namespace Questions.Providers.Cache
 
         public IList<Question> Questions {
             get {
-                return Get<IList<Question>>(CacheKeys.Dictionaries.ToString());
+                return Get<IList<Question>>(CacheKeys.Questions.ToString());
             }
             set
             {

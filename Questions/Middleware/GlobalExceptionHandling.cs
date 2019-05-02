@@ -25,12 +25,13 @@ namespace Questions.Managers
             try
             {
                 await _next(httpContext);
+                
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message, new object[] { });
-                return;   
-            }
+                await httpContext.Response.WriteAsync("Invalid Operation");                 
+            } 
 
         }
     }
