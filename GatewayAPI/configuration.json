@@ -11,6 +11,18 @@
       ],
       "UpstreamPathTemplate": "/Q/GetQuestion/{Dictionary}"
        
+    },
+    {
+      "DownstreamPathTemplate": "/api/Questions/GenerateTestData/",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "questionapi",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/Q/GenerateTestData/"
+
     }
   ],
   "GlobalConfiguration": {

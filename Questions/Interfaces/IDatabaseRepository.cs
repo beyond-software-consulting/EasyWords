@@ -9,6 +9,8 @@ namespace Questions.Interfaces
 
 
         TI Add(TI item);
+        void AddRange(IList<TI> Items);
+
         TI Update(TI item);
         void Delete(TI item);
 

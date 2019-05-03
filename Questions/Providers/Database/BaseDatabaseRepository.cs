@@ -110,5 +110,17 @@ namespace Questions.Providers.Database
 
 
         }
+
+        public void AddRange(IList<T> Items)
+        {
+            foreach (var item in Items)
+            {
+                var prop = (from p in item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                            where p.GetCustomAttribute(typeof(IdentityFieldAttribute)) != null
+                            select p).FirstOrDefault();
+                prop.SetValue(item, GetNextSequence());
+            }
+            collection.InsertManyAsync(Items);
+        }
     }
 }
