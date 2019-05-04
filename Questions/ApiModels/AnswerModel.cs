@@ -2,25 +2,17 @@
 using MongoDB.Bson;
 using Questions.Interfaces;
 
-namespace Questions.Models
+namespace Questions.ApiModels
 {
-    public class Answer:IModelBase
+    public class Answer
     {
  
 
         public int QuestionID { get; set; }
         public string AnswerText { get; set; }
+        public int UserId { get; set; }
+        public int DictionaryId { get; set; }
 
-        public DateTime CreateDate { get; set; }
-        public int Id { get; set; }
-       
-        public ObjectId InternalId { get; set; }
-        public ObjectId _Id { get; set; }
-        public DateTime DateOfCreation { get; set; }
 
-        public string ToJson()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -10,7 +10,7 @@ services:
        
     mongodb:
         image: mongo 
-        container_name: mongolocal 
+        container_name: mongodb 
         networks:
             database: 
                 aliases: 

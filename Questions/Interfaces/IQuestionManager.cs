@@ -13,7 +13,7 @@ namespace Questions.Interfaces
 
         Task<ActionResult<ApiModels.QuestionBinding>> GetQuestion(int userId,int userClientId,int dictionaryId,int questionTypeId);
 
-        Task<ActionResult> SaveAnswer(Answer answer);
+        Task<ActionResult> SaveAnswer(ApiModels.Answer answer);
         string AddQuestion(Question question);
 
         Task<ActionResult> GenerateTestData();

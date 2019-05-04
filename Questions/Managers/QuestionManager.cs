@@ -10,6 +10,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Questions.Helpers;
 using Questions.Adapters;
+using Microsoft.ApplicationInsights;
 
 namespace Questions.Managers
 {
@@ -21,6 +22,9 @@ namespace Questions.Managers
         IDatabaseRepository<Question> QuestionDatabaseProvider { get; set; }
         IDatabaseRepository<Pair> PairDatabaseProvider { get; set; }
         IDatabaseRepository<UserPairScore> UserPairScoreDatabaseProvider { get; set; }
+
+        TelemetryClient telemetryClient = new TelemetryClient();
+
 
         public QuestionManager(IDatabaseRepository<Question> questionDatabaseProvider
             ,IDatabaseRepository<Pair> pairDatabaseProvider
@@ -34,7 +38,8 @@ namespace Questions.Managers
             PairDatabaseProvider = pairDatabaseProvider;
             UserPairScoreDatabaseProvider = userPairDatabaseProvider;
 
-             
+            telemetryClient.InstrumentationKey = "86f807bf-88e5-41b1-8bcd-ab8a6ba41909"; 
+            RefreshCaches().Wait();
         }
 
         public  string AddQuestion(Question question)
@@ -45,8 +50,13 @@ namespace Questions.Managers
 
         public async Task<ActionResult<ApiModels.QuestionBinding>> GetQuestion(int userId, int userClientId, int dictionaryId, int questionTypeId)
         {
-            await RefreshCaches();
+            Dictionary<string, double> metrics = new Dictionary<string, double>();
+            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
+            var totalTime = System.Diagnostics.Stopwatch.StartNew();
+            
 
+            metrics.Add("Initial Refresh Cache", stopWatch.ElapsedMilliseconds);
+            stopWatch.Restart();
             var dictionary = CacheProvider.Pairs.Where(d => d.DictionaryId == dictionaryId).FirstOrDefault();
             if (dictionary == null)
                 throw new NullReferenceException(string.Format("Dictionary not exist with DictionaryID:{0}", dictionaryId));
@@ -56,28 +66,38 @@ namespace Questions.Managers
 
             if (CacheProvider.Pairs.Count < 5)
                 throw new InvalidOperationException("Not enough pair for dictionary");
-
+            metrics.Add("Validation Complete", stopWatch.ElapsedMilliseconds);
+            stopWatch.Restart();
             var unansweredQuestion = GetUnansweredQuestion(userClientId, dictionaryId);
-
+            metrics.Add("GetUnAnsweredQuestion Completed", stopWatch.ElapsedMilliseconds);
+            stopWatch.Restart();
             var rankList = GetAllUserRanksByDictionaryId(userId, dictionaryId);
 
             var userRank = rankList.FirstOrDefault(r => r.UserId == userId);
-
+            metrics.Add("Calculate Rank Completed", stopWatch.ElapsedMilliseconds);
+            stopWatch.Restart();
             if (unansweredQuestion != null)
             {
-
+                metrics.Add("UnAnsweredQuestion InProgress", 0);
+                stopWatch.Restart();
                 var unansweredPair = CacheProvider.Pairs.Where(p => p.Id == unansweredQuestion.PairID).FirstOrDefault();
                 var targetSoundEx = unansweredPair.SoundEx1;
                 if (unansweredQuestion.QuestionWordNumber == 2)
                     targetSoundEx = unansweredPair.SoundEx2;
                 var wrongPairs = GetWrongPairs(targetSoundEx, unansweredQuestion.QuestionWordNumber, dictionaryId,unansweredPair.Id);
-                return ModelFactory.ToQuestionBinding(unansweredQuestion, unansweredPair, wrongPairs, userRank);
+                metrics.Add("GetWrongPairs Completed", stopWatch.ElapsedMilliseconds);
+                stopWatch.Restart();
+                metrics.Add("Total Executing time", totalTime.ElapsedMilliseconds);
+                telemetryClient.TrackEvent("GetQuestions", null, metrics);
+                return ModelFactory.ToQuestionBinding(unansweredQuestion, unansweredPair, wrongPairs, userRank); 
             }
 
             var communityScore = GetCommunityScore(userId, dictionaryId);
-
+            metrics.Add("CommunityScore Completed", stopWatch.ElapsedMilliseconds);
+            stopWatch.Reset();
             var unbindPair = GenerateUnpairQuestion(communityScore,dictionaryId);
-
+            metrics.Add("GenerateUnpair Completed", stopWatch.ElapsedMilliseconds);
+            stopWatch.Reset();
             int numberOfWord = Convert.ToInt32(Math.Floor(new Random().NextDouble() * (3 - 1) + 1));
 
             var question = AddNewQuestionWithUnbindPair(unbindPair, userClientId, numberOfWord);
@@ -86,6 +106,10 @@ namespace Questions.Managers
 
             var wrongPairList = GetWrongPairs(unbindPair.SoundEx1, numberOfWord, dictionaryId, unbindPair.Id);
             var questionBind = ModelFactory.ToQuestionBinding(question, unbindPair, wrongPairList, userRank);
+            metrics.Add("Total Executing time", totalTime.ElapsedMilliseconds);
+
+            telemetryClient.TrackEvent("GetQuestions", null, metrics);
+
             return questionBind;
         }
 
@@ -107,7 +131,7 @@ namespace Questions.Managers
             return question;
         }
 
-        public async Task<ActionResult> SaveAnswer(Answer answer)
+        public async Task<ActionResult> SaveAnswer(ApiModels.Answer answer)
         {
             if (string.IsNullOrEmpty(answer.AnswerText))
                 throw new ArgumentNullException("Answer text is null");
@@ -116,7 +140,7 @@ namespace Questions.Managers
 
             var result = CheckAnswer(question,answer);
 
-            UpdateUserPairScoreRepository(question,true );
+            UpdateUserPairScoreRepository(question, true, answer.UserId, answer.DictionaryId);
 
             if (result)
             {
@@ -164,7 +188,7 @@ namespace Questions.Managers
 
         }
         
-        private async Task<Question> UpdateQuestionRepository(Question question,Answer answer)
+        private async Task<Question> UpdateQuestionRepository(Question question,ApiModels.Answer answer)
         {
             question.Answer = answer.AnswerText;
             question.DateOfAnswer = DateTime.UtcNow;
@@ -174,15 +198,15 @@ namespace Questions.Managers
             return await Task.FromResult(result);
         }
 
-        private void UpdateUserPairScoreRepository(Question question,bool wasAnswerIsCorrect)
+        private void UpdateUserPairScoreRepository(Question question,bool wasAnswerIsCorrect,int userId,int dictionaryId)
         {
-            var userPairScore = UserPairScoreDatabaseProvider.GetAll().FirstOrDefault(q => q.PairId == question.PairID);
+            var userPairScore = CacheProvider.UserScores.Where(q => q.PairId == question.PairID).FirstOrDefault();
             if(userPairScore==null)
             {
                 userPairScore = new UserPairScore()
                 {
-                    UserId = 1,
-                    DictionaryId = 1,
+                    UserId = userId,
+                    DictionaryId = dictionaryId,
                     TotalCorrect = wasAnswerIsCorrect ? 1 : 0,
                     TotalWrong = wasAnswerIsCorrect ? 0 : 1
                 };
@@ -208,25 +232,23 @@ namespace Questions.Managers
         }
 
 
-        private bool CheckAnswer(Question question,Answer answer)
+        private bool CheckAnswer(Question question,ApiModels.Answer answer)
         {
             var pair = PairDatabaseProvider.GetById(question.PairID);
-            return ((question.QuestionWordNumber == 1 ? pair.InLanguage2 : pair.InLanguage2) == answer.AnswerText);                
+            return ((question.QuestionWordNumber == 1 ? pair.InLanguage1 : pair.InLanguage2) == answer.AnswerText);                
 
         }
         private Question GetUnansweredQuestion(int userClientId,int dictionaryId)
         {
             if (CacheProvider.Questions == null) return null;
+            var userClientQuestions = (from q in CacheProvider.Questions where q.DateOfAnswer == null && q.UserClientID == userClientId select q);
+            var dictionaryPairs = (from p in CacheProvider.Pairs where p.DictionaryId == dictionaryId select p);
 
-            var results = (from q in CacheProvider.Questions
-                           join p in CacheProvider.Pairs on q.PairID equals p.Id
-                           where q.DateOfAnswer == null
-                           && q.UserClientID == userClientId
-                           && p.DictionaryId == dictionaryId
-
+            var result = (from q in userClientQuestions
+                           join p in dictionaryPairs on q.PairID equals p.Id
                            select q).FirstOrDefault();
 
-            return results;
+            return result;
 
 
         }
@@ -239,12 +261,14 @@ namespace Questions.Managers
                            into temp
                            select new CommunityScore()
                            {
+
                                DictionaryID = temp.Key.DictionaryId,
                                PairID = temp.Key.PairId,
                                TotalCorrect = (from s2 in temp select s2.TotalCorrect).Sum(),
                                TotalWrong = (from s2 in temp select s2.TotalWrong).Sum(),
                                TotalCommunityScore = (from s2 in temp select s2.TotalCorrect - s2.TotalWrong).Sum()
-                           }).ToList();
+                           }
+                           ).ToList();
 
             return results;
         }
@@ -296,26 +320,51 @@ namespace Questions.Managers
 
         private IList<Pair> GetWrongPairs(string soundEx,int questionWordNumber,int dictionaryId,int originalPairId)
         {
+            if(questionWordNumber == 1) 
+            {
+                return GetWrongPairsBySoundEx1(soundEx, dictionaryId, originalPairId);
+            }
+            else
+            {
+                return GetWrongPairsBySoundEx2(soundEx, dictionaryId, originalPairId);
+            }
+
+        }
+        public IList<Pair> GetWrongPairsBySoundEx1(string soundEx,int dictionaryId, int originalPairId)
+        {
             var letter = soundEx[0].ToString();
             var soundExNumber = int.Parse(soundEx.Substring(1));
-
             var result = (from p in CacheProvider.Pairs
-                          where 
-                          p.DictionaryId == dictionaryId 
+                          where
+                          p.DictionaryId == dictionaryId
                           && p.Id != originalPairId
-                          && (questionWordNumber == 1 ? p.SoundEx1[0].ToString() : p.SoundEx2[0].ToString()) == letter
-                          && Math.Abs(int.Parse(questionWordNumber == 1 ? p.SoundEx1.Substring(1) : p.SoundEx2.Substring(1)) - soundExNumber) < 40
+                          && p.SoundEx1[0].ToString() == letter
+                          && Math.Abs(int.Parse(p.SoundEx1.Substring(1)) - soundExNumber) < 40
                           select p)
-                          .OrderByDescending(x => Math.Abs(int.Parse((questionWordNumber == 1 ? x.SoundEx1.Substring(1) : x.SoundEx2.Substring(1))) - soundExNumber))
-                          .Take(5).ToList();
-
+                             .OrderByDescending(x => Math.Abs(int.Parse(x.SoundEx1.Substring(1)) - soundExNumber))
+                             .Take(5).ToList();
             return result;
         }
 
+        public IList<Pair> GetWrongPairsBySoundEx2(string soundEx, int dictionaryId, int originalPairId)
+        {
+            var letter = soundEx[0].ToString();
+            var soundExNumber = int.Parse(soundEx.Substring(1));
+            var result = (from p in CacheProvider.Pairs
+                          where
+                          p.DictionaryId == dictionaryId
+                          && p.Id != originalPairId
+                          && p.SoundEx2[0].ToString() == letter
+                          && Math.Abs(int.Parse(p.SoundEx1.Substring(1)) - soundExNumber) < 40
+                          select p)
+                             .OrderByDescending(x => Math.Abs(int.Parse(x.SoundEx2.Substring(1)) - soundExNumber))
+                             .Take(5).ToList();
+            return result;
+        }
         public async Task<ActionResult> GenerateTestData()
         {
 
-             var pairs = CacheProvider.Pairs.Take(5000);
+             var pairs = CacheProvider.Pairs.Take(20000);
             IList<Question> questions = new List<Question>();
             foreach (var pair in pairs)
             {

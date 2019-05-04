@@ -43,7 +43,9 @@ namespace Questions
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddLogging(); 
+            services.AddApplicationInsightsTelemetry(Configuration);
+
+            services.AddLogging();
 
 
 

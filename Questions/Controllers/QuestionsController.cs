@@ -41,7 +41,7 @@ namespace Questions.Controllers
 
 
         [HttpPost("SaveAnswer")]
-        public async Task<ActionResult> SaveAnswer([FromBody] Answer answer) {
+        public async Task<ActionResult> SaveAnswer([FromBody] ApiModels.Answer answer) {
 
             return await _manager.SaveAnswer(answer);
         }
