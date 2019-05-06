@@ -11,12 +11,12 @@ namespace Questions.Interfaces
     public interface IQuestionManager
     {
 
-        Task<ActionResult<ApiModels.QuestionBinding>> GetQuestion(int userId,int userClientId,int dictionaryId,int questionTypeId);
+        Task<ApiModels.QuestionBinding> GetQuestion(int userId,int userClientId,int dictionaryId,int questionTypeId);
 
-        Task<ActionResult> SaveAnswer(ApiModels.Answer answer);
-        string AddQuestion(Question question);
+        Task<IActionResult> SaveAnswer(ApiModels.Answer answer);
 
-        Task<ActionResult> GenerateTestData();
+
+        Task<IActionResult> GenerateTestData();
 
          
     }

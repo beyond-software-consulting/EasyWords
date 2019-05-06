@@ -42,75 +42,51 @@ namespace Questions.Managers
             RefreshCaches().Wait();
         }
 
-        public  string AddQuestion(Question question)
+        public async Task<ApiModels.QuestionBinding> GetQuestion(int userId, int userClientId, int dictionaryId, int questionTypeId)
         {
-            throw new NotImplementedException();
-        }
 
 
-        public async Task<ActionResult<ApiModels.QuestionBinding>> GetQuestion(int userId, int userClientId, int dictionaryId, int questionTypeId)
-        {
-            Dictionary<string, double> metrics = new Dictionary<string, double>();
-            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
-            var totalTime = System.Diagnostics.Stopwatch.StartNew();
-            
-
-            metrics.Add("Initial Refresh Cache", stopWatch.ElapsedMilliseconds);
-            stopWatch.Restart();
-            var dictionary = CacheProvider.Pairs.Where(d => d.DictionaryId == dictionaryId).FirstOrDefault();
-            if (dictionary == null)
-                throw new NullReferenceException(string.Format("Dictionary not exist with DictionaryID:{0}", dictionaryId));
+            //var dictionary = CacheProvider.Dictionaries.Where(d => d.Id == dictionaryId).FirstOrDefault();
+            //if (dictionary == null)
+                //throw new NullReferenceException(string.Format("Dictionary not exist with DictionaryID:{0}", dictionaryId));
 
             if (questionTypeId < 1 || questionTypeId > 2)
                 throw new ArgumentOutOfRangeException(string.Format("Invalid QuestionTypeID {0}", questionTypeId));
 
             if (CacheProvider.Pairs.Count < 5)
                 throw new InvalidOperationException("Not enough pair for dictionary");
-            metrics.Add("Validation Complete", stopWatch.ElapsedMilliseconds);
-            stopWatch.Restart();
-            var unansweredQuestion = GetUnansweredQuestion(userClientId, dictionaryId);
-            metrics.Add("GetUnAnsweredQuestion Completed", stopWatch.ElapsedMilliseconds);
-            stopWatch.Restart();
-            var rankList = GetAllUserRanksByDictionaryId(userId, dictionaryId);
 
-            var userRank = rankList.FirstOrDefault(r => r.UserId == userId);
-            metrics.Add("Calculate Rank Completed", stopWatch.ElapsedMilliseconds);
-            stopWatch.Restart();
+            var unansweredQuestion = await GetUnansweredQuestion(userClientId, dictionaryId);
+
+            //var rankList = GetAllUserRanksByDictionaryId(userId, dictionaryId);
+
+            //var userRank = rankList.FirstOrDefault(r => r.UserId == userId);
             if (unansweredQuestion != null)
             {
-                metrics.Add("UnAnsweredQuestion InProgress", 0);
-                stopWatch.Restart();
                 var unansweredPair = CacheProvider.Pairs.Where(p => p.Id == unansweredQuestion.PairID).FirstOrDefault();
                 var targetSoundEx = unansweredPair.SoundEx1;
                 if (unansweredQuestion.QuestionWordNumber == 2)
+                {
                     targetSoundEx = unansweredPair.SoundEx2;
-                var wrongPairs = GetWrongPairs(targetSoundEx, unansweredQuestion.QuestionWordNumber, dictionaryId,unansweredPair.Id);
-                metrics.Add("GetWrongPairs Completed", stopWatch.ElapsedMilliseconds);
-                stopWatch.Restart();
-                metrics.Add("Total Executing time", totalTime.ElapsedMilliseconds);
-                telemetryClient.TrackEvent("GetQuestions", null, metrics);
-                return ModelFactory.ToQuestionBinding(unansweredQuestion, unansweredPair, wrongPairs, userRank); 
+                }
+
+                var wrongPairs = await GetWrongPairs(targetSoundEx, unansweredQuestion.QuestionWordNumber, dictionaryId,unansweredPair.Id);
+            
+                return ModelFactory.ToQuestionBinding(unansweredQuestion, unansweredPair, wrongPairs, null); 
             }
 
-            var communityScore = GetCommunityScore(userId, dictionaryId);
-            metrics.Add("CommunityScore Completed", stopWatch.ElapsedMilliseconds);
-            stopWatch.Reset();
-            var unbindPair = GenerateUnpairQuestion(communityScore,dictionaryId);
-            metrics.Add("GenerateUnpair Completed", stopWatch.ElapsedMilliseconds);
-            stopWatch.Reset();
+            var communityScore = await GetCommunityScore(userId, dictionaryId);
+            var unbindPair = await GenerateUnpairQuestion(communityScore,dictionaryId);
             int numberOfWord = Convert.ToInt32(Math.Floor(new Random().NextDouble() * (3 - 1) + 1));
 
             var question = AddNewQuestionWithUnbindPair(unbindPair, userClientId, numberOfWord);
 
-            RefreshCaches(true);
+            await RefreshCaches(true);
 
-            var wrongPairList = GetWrongPairs(unbindPair.SoundEx1, numberOfWord, dictionaryId, unbindPair.Id);
-            var questionBind = ModelFactory.ToQuestionBinding(question, unbindPair, wrongPairList, userRank);
-            metrics.Add("Total Executing time", totalTime.ElapsedMilliseconds);
+            var wrongPairList = await GetWrongPairs(unbindPair.SoundEx1, numberOfWord, dictionaryId, unbindPair.Id);
+            var questionBind = ModelFactory.ToQuestionBinding(question, unbindPair, wrongPairList, null);
 
-            telemetryClient.TrackEvent("GetQuestions", null, metrics);
-
-            return questionBind;
+            return await Task.FromResult(questionBind);
         }
 
         public Question AddNewQuestionWithUnbindPair(Pair unbindPair,int userClientId,int numberOfWord)
@@ -131,7 +107,7 @@ namespace Questions.Managers
             return question;
         }
 
-        public async Task<ActionResult> SaveAnswer(ApiModels.Answer answer)
+        public async Task<IActionResult> SaveAnswer(ApiModels.Answer answer)
         {
             if (string.IsNullOrEmpty(answer.AnswerText))
                 throw new ArgumentNullException("Answer text is null");
@@ -144,15 +120,15 @@ namespace Questions.Managers
 
             if (result)
             {
-                UpdateQuestionRepository(question, answer);
+                await UpdateQuestionRepository(question, answer);
             }
 
-            RefreshCaches(true);
+            await RefreshCaches(true);
 
             if (result)
-                return new OkResult();
+                return await Task.FromResult(new OkResult());
             else
-                return new BadRequestResult();
+                return await Task.FromResult(new BadRequestResult());
 
             
         }
@@ -221,7 +197,7 @@ namespace Questions.Managers
             }
 
         }
-        private async Task RefreshCaches(bool ForceRefresh=false)
+        private async Task<bool> RefreshCaches(bool ForceRefresh=false)
         {
 
             if (CacheProvider.Pairs == null || ForceRefresh)
@@ -229,6 +205,10 @@ namespace Questions.Managers
             if (CacheProvider.Questions == null || ForceRefresh)
                 CacheProvider.Questions = QuestionDatabaseProvider.GetAll();
             if (CacheProvider.UserScores == null || ForceRefresh) CacheProvider.UserScores = UserPairScoreDatabaseProvider.GetAll();
+
+
+            return await Task.FromResult(true);
+
         }
 
 
@@ -238,7 +218,7 @@ namespace Questions.Managers
             return ((question.QuestionWordNumber == 1 ? pair.InLanguage1 : pair.InLanguage2) == answer.AnswerText);                
 
         }
-        private Question GetUnansweredQuestion(int userClientId,int dictionaryId)
+        private async Task<Question> GetUnansweredQuestion(int userClientId,int dictionaryId)
         {
             if (CacheProvider.Questions == null) return null;
             var userClientQuestions = (from q in CacheProvider.Questions where q.DateOfAnswer == null && q.UserClientID == userClientId select q);
@@ -248,11 +228,11 @@ namespace Questions.Managers
                            join p in dictionaryPairs on q.PairID equals p.Id
                            select q).FirstOrDefault();
 
-            return result;
+            return await Task.FromResult(result);
 
 
         }
-        private IList<CommunityScore> GetCommunityScore(int userId,int dictionaryId)
+        private async Task<IList<CommunityScore>> GetCommunityScore(int userId,int dictionaryId)
         {
 
             var results = (from s in CacheProvider.UserScores
@@ -270,17 +250,17 @@ namespace Questions.Managers
                            }
                            ).ToList();
 
-            return results;
+            return await Task.FromResult(results);
         }
 
 
-        private Pair GenerateUnpairQuestion(IList<CommunityScore> communityScores,int dictionaryId)
+        private async Task<Pair> GenerateUnpairQuestion(IList<CommunityScore> communityScores,int dictionaryId)
         {
             var pairs = GetMinimizedSetOfPair(communityScores,dictionaryId);
 
             var pair = GetBestQuestinPairByScore(pairs);
 
-            return pair; 
+            return await Task.FromResult(pair); 
         }
 
         private IList<UserPairScoreNormalization> GetMinimizedSetOfPair(IList<CommunityScore> communityScores,int dictionaryId)
@@ -318,15 +298,15 @@ namespace Questions.Managers
         }
 
 
-        private IList<Pair> GetWrongPairs(string soundEx,int questionWordNumber,int dictionaryId,int originalPairId)
+        private async  Task<IList<Pair>> GetWrongPairs(string soundEx,int questionWordNumber,int dictionaryId,int originalPairId)
         {
             if(questionWordNumber == 1) 
             {
-                return GetWrongPairsBySoundEx1(soundEx, dictionaryId, originalPairId);
+                return await Task.FromResult(GetWrongPairsBySoundEx1(soundEx, dictionaryId, originalPairId));
             }
             else
             {
-                return GetWrongPairsBySoundEx2(soundEx, dictionaryId, originalPairId);
+                return await Task.FromResult(GetWrongPairsBySoundEx2(soundEx, dictionaryId, originalPairId));
             }
 
         }
@@ -346,7 +326,7 @@ namespace Questions.Managers
             return result;
         }
 
-        public IList<Pair> GetWrongPairsBySoundEx2(string soundEx, int dictionaryId, int originalPairId)
+        public  IList<Pair> GetWrongPairsBySoundEx2(string soundEx, int dictionaryId, int originalPairId)
         {
             var letter = soundEx[0].ToString();
             var soundExNumber = int.Parse(soundEx.Substring(1));
@@ -361,7 +341,7 @@ namespace Questions.Managers
                              .Take(5).ToList();
             return result;
         }
-        public async Task<ActionResult> GenerateTestData()
+        public async Task<IActionResult> GenerateTestData()
         {
 
              var pairs = CacheProvider.Pairs.Take(20000);
@@ -383,7 +363,7 @@ namespace Questions.Managers
                 questions.Add(question);
             }
             QuestionDatabaseProvider.AddRange(questions);
-            return new OkResult();
+            return await Task.FromResult(new OkResult());
         }
         #endregion
     }

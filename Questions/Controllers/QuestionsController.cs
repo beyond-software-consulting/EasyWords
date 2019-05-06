@@ -34,16 +34,18 @@ namespace Questions.Controllers
         }
 
         [HttpGet("GenerateTestData")]
-        public  Task<ActionResult> CreateTestData()
+        public async Task<ActionResult> CreateTestData()
         {
-            return _manager.GenerateTestData();
+            return (await _manager.GenerateTestData()) as ActionResult;
         }
 
 
         [HttpPost("SaveAnswer")]
         public async Task<ActionResult> SaveAnswer([FromBody] ApiModels.Answer answer) {
 
-            return await _manager.SaveAnswer(answer);
+            IActionResult value = await _manager.SaveAnswer(answer);
+
+            return value as ActionResult;
         }
 
 

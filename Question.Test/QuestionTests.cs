@@ -123,7 +123,7 @@ namespace Tests
         [Test]
         public async Task SetAnswerReturnOkResult()
         {
-            var answer  = new Questions.Models.Answer();
+            var answer  = new Questions.ApiModels.Answer();
             answer.QuestionID = 11794;
             answer.AnswerText = "yaratmak";
             var result = await questionController.SaveAnswer(answer);
@@ -134,7 +134,7 @@ namespace Tests
         [Test]
         public async Task SetAnswerReturnBadRequestResult()
         {
-            var answer = new Questions.Models.Answer();
+            var answer = new Questions.ApiModels.Answer();
             answer.QuestionID = 11794;
             answer.AnswerText = "yaratmakaaa";
             var result = await questionController.SaveAnswer(answer);
