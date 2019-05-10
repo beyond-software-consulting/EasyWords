@@ -6,6 +6,7 @@ using EventBus;
 using EventBus.Interfaces;
 using EventBusRabbitMQProvider;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -46,7 +47,7 @@ namespace Tests
             questionManager = new QuestionManager(questionDatabaseProvider,
                 pairDatabaseProvider,
                 userScoreDatabaseProvider,
-                cacheProvider);
+                cacheProvider, new Mock<IMemoryCache>().Object);
 
         }
         private void RegisterQuestionController()

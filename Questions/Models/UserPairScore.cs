@@ -7,7 +7,7 @@ using Questions.Interfaces;
 
 namespace Questions.Models
 {
-    [Model(CollectionName =  "UserPairScores")]
+    [Model(CollectionName =  "UserPairScores",IgnoreIdentitySeed =true)]
     public class UserPairScore
     {
 
@@ -26,6 +26,8 @@ namespace Questions.Models
         [JsonIgnore]
         [BsonId]
         public ObjectId _Id { get; set; }
+
+
 
       
     }

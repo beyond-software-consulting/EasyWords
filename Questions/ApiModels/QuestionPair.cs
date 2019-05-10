@@ -3,6 +3,7 @@ namespace Questions.ApiModels
 {
     public class QuestionPair
     {
+        public int PairID { get; set; }
         public string InLanguage1 { get; set; }
         public string InLanguage2 { get; set; }
         public string Conjugation { get; set; }

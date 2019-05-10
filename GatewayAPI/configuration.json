@@ -23,6 +23,18 @@
       ],
       "UpstreamPathTemplate": "/Q/GenerateTestData/"
 
+    },
+    {
+      "DownstreamPathTemplate": "/api/Questions/SaveAnswer/",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "questionapi",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/Q/SaveAnswer/"
+
     }
   ],
   "GlobalConfiguration": {

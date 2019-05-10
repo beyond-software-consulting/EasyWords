@@ -33,12 +33,15 @@ namespace Questions.Providers.Database
 
         public T Add(T item)
         {
+            bool ignoreIdentitySeed = GetIgnoreIdentitySeed<T>();
+            if (!ignoreIdentitySeed)
+            {
+                var prop = (from p in item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                            where p.GetCustomAttribute(typeof(IdentityFieldAttribute)) != null
+                            select p).FirstOrDefault();
 
-            var prop = (from p in item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                        where p.GetCustomAttribute(typeof(IdentityFieldAttribute)) != null
-                        select p).FirstOrDefault();
-            prop.SetValue(item, GetNextSequence());
-
+                prop.SetValue(item, GetNextSequence());
+            }
             collection.InsertOne(item);
             return item;
         }
@@ -78,7 +81,7 @@ namespace Questions.Providers.Database
         }
 
 
-        protected  string GetCollectionName<TT>()
+        protected string GetCollectionName<TT>()
         {
             string collectionName = "";
             var attr = typeof(TT).GetCustomAttributes(typeof(ModelAttribute), true).FirstOrDefault();
@@ -88,7 +91,16 @@ namespace Questions.Providers.Database
             }
             return collectionName;
         }
-
+        protected bool GetIgnoreIdentitySeed<TT>()
+        {
+            bool ignoreIdentitySeed = false;
+            var attr = typeof(TT).GetCustomAttributes(typeof(ModelAttribute), true).FirstOrDefault();
+            if (attr != null)
+            {
+                ignoreIdentitySeed = (attr as ModelAttribute).IgnoreIdentitySeed;
+            }
+            return ignoreIdentitySeed;
+        }
         protected int GetIDValue(T item)
         {
             return (int)item.GetType().GetProperty("Id").GetValue(item);

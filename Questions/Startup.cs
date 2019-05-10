@@ -48,6 +48,7 @@ namespace Questions
             services.AddLogging();
 
 
+            services.AddMemoryCache();
 
             ///Question Microservice db entegration
             //services.AddQuestionDataBaseContext();

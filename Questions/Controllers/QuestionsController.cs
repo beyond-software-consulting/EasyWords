@@ -41,11 +41,11 @@ namespace Questions.Controllers
 
 
         [HttpPost("SaveAnswer")]
-        public async Task<ActionResult> SaveAnswer([FromBody] ApiModels.Answer answer) {
+        public async Task<ActionResult<ApiModels.AnswerResult>> SaveAnswer([FromBody] ApiModels.Answer answer) {
 
-            IActionResult value = await _manager.SaveAnswer(answer);
+            var value =  _manager.SaveAnswer(answer);
 
-            return value as ActionResult;
+            return await value;
         }
 
 

@@ -27,7 +27,8 @@ namespace Questions.Adapters
                 InLanguage2 = pair.InLanguage2,
                 Conjugation = pair.Conjugation,
                 SoundEx1 = pair.SoundEx1,
-                SoundEx2 = pair.SoundEx2
+                SoundEx2 = pair.SoundEx2,
+                QuestionWordNumber = question.QuestionWordNumber
             };
 
             binding.Rank = new ApiModels.UserRank()
@@ -41,6 +42,7 @@ namespace Questions.Adapters
             {
                 wrongPairList.Add(new ApiModels.QuestionPair()
                 {
+                    PairID = item.Id,
                     InLanguage1 = item.InLanguage1,
                     InLanguage2 = item.InLanguage2,
                     Conjugation = item.Conjugation,

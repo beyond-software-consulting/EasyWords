@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Questions.Helpers;
 using Questions.Adapters;
 using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Questions.Managers
 {
@@ -19,9 +20,55 @@ namespace Questions.Managers
             
 
         ICacheProvider CacheProvider { get; set; }
+        IMemoryCache memoryCache { get; set; }
         IDatabaseRepository<Question> QuestionDatabaseProvider { get; set; }
         IDatabaseRepository<Pair> PairDatabaseProvider { get; set; }
         IDatabaseRepository<UserPairScore> UserPairScoreDatabaseProvider { get; set; }
+
+        IList<Question> QuestionCache
+        {
+            get 
+            {
+                IList<Question> questions = new List<Question>();
+                questions = memoryCache.Get<IList<Question>>(CacheKeys.Questions.ToString());
+                return questions;
+
+            }
+            set 
+            {
+                memoryCache.Set<IList<Question>>(CacheKeys.Questions.ToString(), value);
+            }
+        }
+
+        IList<Pair> PairCache
+        {
+            get
+            {
+                IList<Pair> pairs = new List<Pair>();
+                pairs = memoryCache.Get<IList<Pair>>(CacheKeys.Pairs.ToString());
+                return pairs;
+
+            }
+            set
+            {
+                memoryCache.Set<IList<Pair>>(CacheKeys.Pairs.ToString(), value);
+            }
+        }
+
+        IList<UserPairScore> UserPairScoreCache
+        {
+            get
+            {
+                IList<UserPairScore> userPairScores = new List<UserPairScore>();
+                userPairScores = memoryCache.Get<IList<UserPairScore>>(CacheKeys.UserScores.ToString());
+                return userPairScores;
+
+            }
+            set
+            {
+                memoryCache.Set<IList<UserPairScore>>(CacheKeys.UserScores.ToString(), value);
+            }
+        }
 
         TelemetryClient telemetryClient = new TelemetryClient();
 
@@ -29,7 +76,8 @@ namespace Questions.Managers
         public QuestionManager(IDatabaseRepository<Question> questionDatabaseProvider
             ,IDatabaseRepository<Pair> pairDatabaseProvider
             ,IDatabaseRepository<UserPairScore> userPairDatabaseProvider
-            ,ICacheProvider cacheProvider)
+            ,ICacheProvider cacheProvider
+            ,IMemoryCache memoryCache)
         {
            
         
@@ -37,6 +85,7 @@ namespace Questions.Managers
             QuestionDatabaseProvider = questionDatabaseProvider;
             PairDatabaseProvider = pairDatabaseProvider;
             UserPairScoreDatabaseProvider = userPairDatabaseProvider;
+            this.memoryCache = memoryCache;
 
             telemetryClient.InstrumentationKey = "86f807bf-88e5-41b1-8bcd-ab8a6ba41909"; 
             RefreshCaches().Wait();
@@ -58,12 +107,14 @@ namespace Questions.Managers
 
             var unansweredQuestion = await GetUnansweredQuestion(userClientId, dictionaryId);
 
-            //var rankList = GetAllUserRanksByDictionaryId(userId, dictionaryId);
 
-            //var userRank = rankList.FirstOrDefault(r => r.UserId == userId);
+
+            var rankList = GetAllUserRanksByDictionaryId(userId, dictionaryId);
+
+            var userRank = rankList.FirstOrDefault(r => r.UserId == userId);
             if (unansweredQuestion != null)
             {
-                var unansweredPair = CacheProvider.Pairs.Where(p => p.Id == unansweredQuestion.PairID).FirstOrDefault();
+                var unansweredPair = PairCache.Where(p => p.Id == unansweredQuestion.PairID).FirstOrDefault();
                 var targetSoundEx = unansweredPair.SoundEx1;
                 if (unansweredQuestion.QuestionWordNumber == 2)
                 {
@@ -107,14 +158,15 @@ namespace Questions.Managers
             return question;
         }
 
-        public async Task<IActionResult> SaveAnswer(ApiModels.Answer answer)
+        public async Task<ApiModels.AnswerResult> SaveAnswer(ApiModels.Answer answer)
         {
             if (string.IsNullOrEmpty(answer.AnswerText))
                 throw new ArgumentNullException("Answer text is null");
 
-            var question = CacheProvider.Questions.Where(q => q.Id == answer.QuestionID).FirstOrDefault();
+            var question = QuestionCache.Where(q => q.Id == answer.QuestionID).FirstOrDefault();
 
             var result = CheckAnswer(question,answer);
+
 
             UpdateUserPairScoreRepository(question, true, answer.UserId, answer.DictionaryId);
 
@@ -123,12 +175,11 @@ namespace Questions.Managers
                 await UpdateQuestionRepository(question, answer);
             }
 
+            var answerResult = new ApiModels.AnswerResult() { IsCorrect = result };
+
             await RefreshCaches(true);
 
-            if (result)
-                return await Task.FromResult(new OkResult());
-            else
-                return await Task.FromResult(new BadRequestResult());
+            return answerResult;
 
             
         }
@@ -138,7 +189,7 @@ namespace Questions.Managers
         private IList<UserRank> GetAllUserRanksByDictionaryId(int dictionaryId,int? userId = null)
         {
 
-            var userPairScores = CacheProvider.UserScores;
+            var userPairScores = UserPairScoreCache;
             var list = (from up in userPairScores
                         where up.DictionaryId == dictionaryId
                         group up by new { up.UserId }
@@ -176,7 +227,7 @@ namespace Questions.Managers
 
         private void UpdateUserPairScoreRepository(Question question,bool wasAnswerIsCorrect,int userId,int dictionaryId)
         {
-            var userPairScore = CacheProvider.UserScores.Where(q => q.PairId == question.PairID).FirstOrDefault();
+            var userPairScore = UserPairScoreCache.Where(q => q.PairId == question.PairID).FirstOrDefault();
             if(userPairScore==null)
             {
                 userPairScore = new UserPairScore()
@@ -200,11 +251,11 @@ namespace Questions.Managers
         private async Task<bool> RefreshCaches(bool ForceRefresh=false)
         {
 
-            if (CacheProvider.Pairs == null || ForceRefresh)
-                CacheProvider.Pairs = PairDatabaseProvider.GetAll();
-            if (CacheProvider.Questions == null || ForceRefresh)
-                CacheProvider.Questions = QuestionDatabaseProvider.GetAll();
-            if (CacheProvider.UserScores == null || ForceRefresh) CacheProvider.UserScores = UserPairScoreDatabaseProvider.GetAll();
+            if (PairCache == null || ForceRefresh)
+                PairCache = PairDatabaseProvider.GetAll();
+            if (QuestionCache == null || ForceRefresh)
+                QuestionCache = QuestionDatabaseProvider.GetAll();
+            if (UserPairScoreCache == null || ForceRefresh) UserPairScoreCache = UserPairScoreDatabaseProvider.GetAll();
 
 
             return await Task.FromResult(true);
@@ -214,15 +265,24 @@ namespace Questions.Managers
 
         private bool CheckAnswer(Question question,ApiModels.Answer answer)
         {
-            var pair = PairDatabaseProvider.GetById(question.PairID);
-            return ((question.QuestionWordNumber == 1 ? pair.InLanguage1 : pair.InLanguage2) == answer.AnswerText);                
+            var pair = PairCache.Where(p => p.Id == question.PairID).FirstOrDefault();
+            if(question.QuestionWordNumber==1)
+            {
+
+                return string.Compare(pair.InLanguage2, answer.AnswerText, true) == 0; 
+            }
+            else
+            {
+                return string.Compare(pair.InLanguage1, answer.AnswerText, true) == 0;
+            }
 
         }
+
         private async Task<Question> GetUnansweredQuestion(int userClientId,int dictionaryId)
         {
-            if (CacheProvider.Questions == null) return null;
-            var userClientQuestions = (from q in CacheProvider.Questions where q.DateOfAnswer == null && q.UserClientID == userClientId select q);
-            var dictionaryPairs = (from p in CacheProvider.Pairs where p.DictionaryId == dictionaryId select p);
+            if (QuestionCache == null) return null;
+            var userClientQuestions = (from q in QuestionCache where q.DateOfAnswer == null && q.UserClientID == userClientId select q);
+            var dictionaryPairs = (from p in PairCache where p.DictionaryId == dictionaryId select p);
 
             var result = (from q in userClientQuestions
                            join p in dictionaryPairs on q.PairID equals p.Id
@@ -235,7 +295,7 @@ namespace Questions.Managers
         private async Task<IList<CommunityScore>> GetCommunityScore(int userId,int dictionaryId)
         {
 
-            var results = (from s in CacheProvider.UserScores
+            var results = (from s in UserPairScoreCache
                            where s.UserId == userId && s.DictionaryId == dictionaryId
                            group s by new { s.PairId, s.DictionaryId }
                            into temp
@@ -265,7 +325,7 @@ namespace Questions.Managers
 
         private IList<UserPairScoreNormalization> GetMinimizedSetOfPair(IList<CommunityScore> communityScores,int dictionaryId)
         {
-            var unbindedPairs = (from p in CacheProvider.Pairs
+            var unbindedPairs = (from p in PairCache
                                  join c in communityScores on p.Id equals c.PairID into temp
                                  from c in temp.DefaultIfEmpty()
                                  where
@@ -286,7 +346,7 @@ namespace Questions.Managers
                                 .ThenByDescending(p => p.TotalCommunityScore)
                                 .ThenBy(p => p.RandomValue).FirstOrDefault();
 
-            return CacheProvider.Pairs.Where(p => p.Id == unbindedPair.PairID).FirstOrDefault(); 
+            return PairCache.Where(p => p.Id == unbindedPair.PairID).FirstOrDefault(); 
         }
 
 
@@ -314,15 +374,14 @@ namespace Questions.Managers
         {
             var letter = soundEx[0].ToString();
             var soundExNumber = int.Parse(soundEx.Substring(1));
-            var result = (from p in CacheProvider.Pairs
+            var result = (from p in PairCache
                           where
-                          p.DictionaryId == dictionaryId
-                          && p.Id != originalPairId
+                          (p.DictionaryId == dictionaryId
                           && p.SoundEx1[0].ToString() == letter
-                          && Math.Abs(int.Parse(p.SoundEx1.Substring(1)) - soundExNumber) < 40
+                          && Math.Abs(int.Parse(p.SoundEx1.Substring(1)) - soundExNumber) <= 48) || p.Id == originalPairId
                           select p)
-                             .OrderByDescending(x => Math.Abs(int.Parse(x.SoundEx1.Substring(1)) - soundExNumber))
-                             .Take(5).ToList();
+                             .OrderByDescending(x => x.Id == originalPairId ? 9999 : Math.Abs(int.Parse(x.SoundEx1.Substring(1)) - soundExNumber))
+                             .Take(5).ToList().OrderBy(xx => Guid.NewGuid()).ToList();
             return result;
         }
 
@@ -330,39 +389,47 @@ namespace Questions.Managers
         {
             var letter = soundEx[0].ToString();
             var soundExNumber = int.Parse(soundEx.Substring(1));
-            var result = (from p in CacheProvider.Pairs
+            var result = (from p in PairCache
                           where
-                          p.DictionaryId == dictionaryId
-                          && p.Id != originalPairId
+                          (p.DictionaryId == dictionaryId
                           && p.SoundEx2[0].ToString() == letter
-                          && Math.Abs(int.Parse(p.SoundEx1.Substring(1)) - soundExNumber) < 40
+                          && Math.Abs(int.Parse(p.SoundEx2.Substring(1)) - soundExNumber) <= 48) || p.Id == originalPairId
                           select p)
-                             .OrderByDescending(x => Math.Abs(int.Parse(x.SoundEx2.Substring(1)) - soundExNumber))
-                             .Take(5).ToList();
+                             .OrderByDescending(x => x.Id == originalPairId ? 9999 : Math.Abs(int.Parse(x.SoundEx2.Substring(1)) - soundExNumber))
+                             .Take(5).ToList().OrderBy(xx => Guid.NewGuid()).ToList();
             return result;
         }
         public async Task<IActionResult> GenerateTestData()
         {
-
-             var pairs = CacheProvider.Pairs.Take(20000);
-            IList<Question> questions = new List<Question>();
-            foreach (var pair in pairs)
+            await Task.Run(() =>
             {
-                int numberOfWord = Convert.ToInt32(Math.Floor(new Random().NextDouble() * (3 - 1) + 1));
-
-
-                Models.Question question = new Question()
+                var pairs = CacheProvider.Pairs.Take(20000);
+               
+                for (int i = 0; i < 10; i++)
                 {
-                    PairID = pair.Id,
-                    QuestionWordNumber = numberOfWord,
-                    DateOfCreation = DateTime.UtcNow,
-                    UserClientID = 1,
-                    Type = 1,
-                    DateOfAnswer = DateTime.UtcNow
-                };
-                questions.Add(question);
-            }
-            QuestionDatabaseProvider.AddRange(questions);
+                    IList<Question> questions = new List<Question>();
+                    var clientId = new Random().Next(50);
+                    foreach (var pair in pairs)
+                    {
+                        int numberOfWord = Convert.ToInt32(Math.Floor(new Random().NextDouble() * (3 - 1) + 1));
+
+
+                        Models.Question question = new Question()
+                        {
+                            PairID = pair.Id,
+                            QuestionWordNumber = numberOfWord,
+                            DateOfCreation = DateTime.UtcNow,
+                            UserClientID = clientId,
+                            Type = 1,
+                            DateOfAnswer = DateTime.UtcNow
+                        };
+                        questions.Add(question);
+                    }
+                    QuestionDatabaseProvider.AddRange(questions);
+                }
+
+            });
+
             return await Task.FromResult(new OkResult());
         }
         #endregion
