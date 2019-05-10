@@ -1,0 +1,48 @@
+
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	xmlns:app="http://schverticndroid.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	
+	app:layout_behavior="@string/appbar_scrolling_view_behavior"
+	tools:showIn="@layout/activity_main"
+	android:minWidth="25px"
+	android:minHeight="25px" 
+
+	android:id="@+id/relativeLayout1">
+	<TextView
+		android:text="Medium Text"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/questionText"
+		android:paddingLeft="15dp" />
+
+</LinearLayout> 
+
+
+
+System.ArgumentException: An element with the same key but a different value already exists. Key: app
+  at System.Collections.Immutable.ImmutableDictionary`2+HashBucket[TKey,TValue].Add (TKey key, TValue value, System.Collections.Generic.IEqualityComparer`1[T] keyOnlyComparer, System.Collections.Generic.IEqualityComparer`1[T] valueComparer, System.Collections.Immutable.ImmutableDictionary`2+KeyCollisionBehavior[TKey,TValue] behavior, System.Collections.Immutable.ImmutableDictionary`2+OperationResult[TKey,TValue]& result) [0x00091] in <6518d0e60ca84f6b915c07341a031a32>:0 
+  at System.Collections.Immutable.ImmutableDictionary`2[TKey,TValue].Add (TKey key, TValue value, System.Collections.Immutable.ImmutableDictionary`2+KeyCollisionBehavior[TKey,TValue] behavior, System.Collections.Immutable.ImmutableDictionary`2+MutationInput[TKey,TValue] origin) [0x00039] in <6518d0e60ca84f6b915c07341a031a32>:0 
+  at System.Collections.Immutable.ImmutableDictionary`2+Builder[TKey,TValue].Add (TKey key, TValue value) [0x00009] in <6518d0e60ca84f6b915c07341a031a32>:0 
+  at Xamarin.AndroidDesigner.Xml.AndroidXmlItem.ComputeNamespaces () [0x00032] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/Xml/AndroidXmlItem.cs:69 
+  at System.Lazy`1[T].ViaFactory (System.Threading.LazyThreadSafetyMode mode) [0x0001c] in /Users/builder/jenkins/workspace/build-package-osx-mono/2018-08/external/bockbuild/builds/mono-x64/external/corefx/src/Common/src/CoreLib/System/Lazy.cs:327 
+--- End of stack trace from previous location where exception was thrown ---
+
+  at System.LazyHelper.ThrowException () [0x00000] in /Users/builder/jenkins/workspace/build-package-osx-mono/2018-08/external/bockbuild/builds/mono-x64/external/corefx/src/Common/src/CoreLib/System/Lazy.cs:97 
+  at System.Lazy`1[T].CreateValue () [0x0007e] in /Users/builder/jenkins/workspace/build-package-osx-mono/2018-08/external/bockbuild/builds/mono-x64/external/corefx/src/Common/src/CoreLib/System/Lazy.cs:435 
+  at System.Lazy`1[T].get_Value () [0x00000] in /Users/builder/jenkins/workspace/build-package-osx-mono/2018-08/external/bockbuild/builds/mono-x64/external/corefx/src/Common/src/CoreLib/System/Lazy.cs:509 
+  at Xamarin.AndroidDesigner.Xml.AndroidXmlItem.TryGetNamespaceFromPrefix (System.String prefix, System.String& ns) [0x00004] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/Xml/AndroidXmlItem.cs:312 
+  at Xamarin.AndroidDesigner.Xml.AndroidXmlAttribute.get_Type () [0x00016] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/Xml/AndroidXmlItem.cs:464 
+  at Xamarin.AndroidDesigner.Xml.AndroidXmlAttribute.get_TypedName () [0x00001] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/Xml/AndroidXmlItem.cs:489 
+  at Xamarin.AndroidDesigner.Xml.AndroidXmlItem+<GetAttributesWithOverlay>d__55.MoveNext () [0x0007a] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/Xml/AndroidXmlItem.cs:186 
+  at Xamarin.AndroidDesigner.LayoutInfo.GetAttributes (Xamarin.AndroidDesigner.Xml.AndroidXmlItem elem, Xamarin.AndroidDesigner.LayoutXmlTarget xmlTarget) [0x00060] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/LayoutInfo.cs:988 
+  at Xamarin.AndroidDesigner.LayoutInfo.GetElementXml (System.Xml.XmlWriter writer, Xamarin.AndroidDesigner.Xml.AndroidXmlItem elem, Xamarin.AndroidDesigner.LayoutXmlTarget xmlTarget, System.Collections.Generic.Dictionary`2[TKey,TValue] acwMap, System.Collections.Generic.Dictionary`2[TKey,TValue] userNamespaces) [0x0001f] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/LayoutInfo.cs:920 
+  at Xamarin.AndroidDesigner.LayoutInfo.GetRenderXml (Xamarin.AndroidDesigner.Xml.AndroidXmlItem root, Xamarin.AndroidDesigner.LayoutXmlTarget xmlTarget, System.Collections.Generic.Dictionary`2[TKey,TValue] acwMap) [0x00041] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/LayoutInfo.cs:908 
+  at Xamarin.AndroidDesigner.LayoutInfo.GetLayoutXml (Xamarin.AndroidDesigner.LayoutXmlTarget xmlTarget, System.Collections.Generic.Dictionary`2[TKey,TValue] acwMap) [0x0005b] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/LayoutInfo.cs:894 
+  at Xamarin.AndroidDesigner.AndroidRenderSession.InflateAsync () [0x00134] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/AndroidRenderSession.cs:766 
+  at Xamarin.AndroidDesigner.AndroidRenderSession.DoRefreshAsync (Xamarin.AndroidDesigner.DesignerSessionParams config) [0x000ea] in /Users/builder/myagent/_work/10/s/Xamarin.Designer.Android/Xamarin.AndroidDesigner/AndroidRenderSession.cs:615 
