@@ -37,13 +37,23 @@ namespace EasyWord.Droid
             SetSupportActionBar(toolbar);
 
 
-           
+            getdata("test_data", (obj) => { 
+
+            });
 
         }
-
+        private async void getdata(string param,Action<object> callBack)
+        {
+            callBack("Done");
+        }
+        private void GetDataCompleted(object data)
+        { 
+        }
         private void GetNextQuestion()
         {
+
             var questionBindingTask = questionConsumer.GetQuestion(1, 1, 1, 1);
+
             questionBindingTask.Wait();
             var questionBinding = questionBindingTask.Result;
             TextView questionText = FindViewById<TextView>(Resource.Id.questionTitle);

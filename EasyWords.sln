@@ -5,13 +5,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{BB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integration", "Integration", "{6BE94932-669D-412E-8A60-650AF463A315}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Questions", "Questions\Questions.csproj", "{F3CE35E3-9F88-49B7-9E63-226397074114}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWords.Questions", "Questions\EasyWords.Questions.csproj", "{F3CE35E3-9F88-49B7-9E63-226397074114}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile", "Profile\Profile.csproj", "{823BC357-A528-45EC-BDBB-03A2C1C3C038}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWords.Profile", "Profile\EasyWords.Profile.csproj", "{823BC357-A528-45EC-BDBB-03A2C1C3C038}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gateway", "Gateway", "{94BF54CE-2B2B-406B-A09C-B67B2ADCF6C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatewayAPI", "GatewayAPI\GatewayAPI.csproj", "{63372EB8-D1F7-4489-A66C-AD48F1A01A21}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWords.GatewayAPI", "GatewayAPI\EasyWords.GatewayAPI.csproj", "{63372EB8-D1F7-4489-A66C-AD48F1A01A21}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{D6936659-58C2-474E-9026-AAEFBCF0F4ED}"
 EndProject
@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBusRabbitMQ", "EventBu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{544B867E-8323-4BA4-9D29-23BD7D111B13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthenticationAPI", "AuthenticationAPI\AuthenticationAPI.csproj", "{B7865069-C98C-441D-97DD-71BA19FBD7B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWords.AuthenticationAPI", "AuthenticationAPI\EasyWords.AuthenticationAPI.csproj", "{B7865069-C98C-441D-97DD-71BA19FBD7B7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A0446128-6477-4B18-8624-DF7EC05A8536}"
 EndProject
@@ -32,6 +32,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWord.Droid", "EasyWord.Droid\EasyWord.Droid.csproj", "{5790035F-961B-4B59-95D0-1A7AE1F5E53E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWords.Client", "EasyWord.Droid\EasyWords.Client\EasyWords.Client.csproj", "{C3B7EEAA-A345-4971-A871-25AADE9DAFCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyWords.Dictionary", "EasyWords.Dictionary\EasyWords.Dictionary.csproj", "{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -163,6 +165,18 @@ Global
 		{C3B7EEAA-A345-4971-A871-25AADE9DAFCE}.Debug|iPhone.Build.0 = Debug|Any CPU
 		{C3B7EEAA-A345-4971-A871-25AADE9DAFCE}.Release|iPhone.ActiveCfg = Release|Any CPU
 		{C3B7EEAA-A345-4971-A871-25AADE9DAFCE}.Release|iPhone.Build.0 = Release|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A}.Release|iPhone.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F3CE35E3-9F88-49B7-9E63-226397074114} = {BB1A6EE5-45F3-4A3F-9438-D2C4DFE43CB7}
@@ -174,5 +188,6 @@ Global
 		{B1922DE2-D4F4-443C-BF22-4CA63D44CA03} = {A0446128-6477-4B18-8624-DF7EC05A8536}
 		{5790035F-961B-4B59-95D0-1A7AE1F5E53E} = {367BC9F2-6379-49EF-BB2C-326AD9127D91}
 		{C3B7EEAA-A345-4971-A871-25AADE9DAFCE} = {367BC9F2-6379-49EF-BB2C-326AD9127D91}
+		{4C517FEE-9406-45A7-B1D2-6C9E76004F6A} = {BB1A6EE5-45F3-4A3F-9438-D2C4DFE43CB7}
 	EndGlobalSection
 EndGlobal
